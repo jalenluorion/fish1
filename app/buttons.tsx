@@ -50,15 +50,13 @@ const JoinModal = ({ joinCode, name, handleJoinInputChange, handleInputChange, h
 };
 
 type CreateModalProps = {
-    participants: number;
     name: string;
-    handleParticipantsChange: (num: number) => void;
     handleInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
     handleModalConfirm: () => void;
     handleModalClose: () => void;
 };
 
-const CreateModal = ({ participants, name, handleParticipantsChange, handleInputChange, handleModalConfirm, handleModalClose }: CreateModalProps) => {
+const CreateModal = ({ name, handleInputChange, handleModalConfirm, handleModalClose }: CreateModalProps) => {
     return (
         <div className="flex flex-col">
             <input
@@ -68,20 +66,6 @@ const CreateModal = ({ participants, name, handleParticipantsChange, handleInput
                 onChange={handleInputChange}
                 className="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <div className="flex">
-                <button
-                    onClick={() => handleParticipantsChange(6)}
-                    className={`bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md mt-2 mr-2 ${participants === 6 ? 'bg-blue-600' : ''}`}
-                >
-                    6 Participants
-                </button>
-                <button
-                    onClick={() => handleParticipantsChange(8)}
-                    className={`bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md mt-2 ${participants === 8 ? 'bg-blue-600' : ''}`}
-                >
-                    8 Participants
-                </button>
-            </div>
             <div className="flex">
                 <button
                     onClick={handleModalConfirm}
@@ -102,27 +86,15 @@ const CreateModal = ({ participants, name, handleParticipantsChange, handleInput
 
 export default function HandleJoinGame() {
     const [joinCode, setJoinCode] = useState('');
-    const [name, setName] = useState('');
-    const [participants, setParticipants] = useState(6);
+    const [name, setName] = useState(Cookies.get('name') || '');
     const [joinModal, showJoinModal] = useState(false);
     const [createModal, showCreateModal] = useState(false);
-
-    useEffect(() => {
-        const name = Cookies.get('name');
-        if (name) {
-            setName(name);
-        }
-    })
 
     const router = useRouter()
 
     function handleJoinInputChange(event: React.ChangeEvent<HTMLInputElement>) {
         setJoinCode(event.target.value);
     };
-
-    function handleParticipantsChange(num: number) {
-        setParticipants(num);
-    }
 
     function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
         setName(event.target.value);
@@ -147,7 +119,7 @@ export default function HandleJoinGame() {
 
     function handleCreateModalConfirm() {
         Cookies.set('name', name)
-        if (participants && name) {
+        if (name) {
             // Create a new game with the specified number of participants and name
             const joinCode = Math.random().toString(36).substring(7); // Generate a random join code
             const joinLink = `/${joinCode}`; // Assuming the join link follows the pattern '/game/{joinCode}/{name}'
@@ -162,9 +134,7 @@ export default function HandleJoinGame() {
             {createModal && (
                 <div className="fixed inset-0 flex items-center justify-center bg-opacity-50 bg-gray-500 backdrop-filter backdrop-blur-sm">
                     <CreateModal
-                        participants={participants}
                         name={name}
-                        handleParticipantsChange={handleParticipantsChange}
                         handleInputChange={handleInputChange}
                         handleModalConfirm={handleCreateModalConfirm}
                         handleModalClose={handleCreateModalClose}

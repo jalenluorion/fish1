@@ -19,12 +19,35 @@ app.prepare().then(() => {
 
     socket.on('joinroom', (game) => {
         socket.join(game.game);
+        game.id = socket.id;
         io.to(game.game).emit('joinroom', game);
-        console.log(game.name + ' joined room: ' + game.game);
+        console.log(game.id + ' joined room: ' + game.game);
     });
 
     socket.on('cardtap', (card) => {
         io.to(card.game).emit('cardtap', card);
+        console.log(card.id + ' tapped card: ' + card.card);
+    });
+
+    socket.on('receiveDeck', (deck) => {
+        io.to(deck.game).emit('receiveDeck', deck);
+        console.log(deck.id + ' received deck');
+    });
+
+    socket.on('updateDeck', (deck) => {
+        io.to(deck.game).emit('updateDeck', deck);
+        console.log(deck.id + ' updated deck');
+    });
+
+    socket.on('startgame', (game) => {
+        io.to(game.game).emit('startgame', game);
+        console.log(game.game + ' started game');
+    });
+
+    socket.on('disconnecting', () => {
+        var room = Array.from(socket.rooms)[1];
+        io.to(room).emit('leaveroom', socket.id);
+        console.log(socket.id + ' left room: ' + room);
     });
 
     socket.on("disconnect", () => {
