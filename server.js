@@ -39,6 +39,11 @@ app.prepare().then(() => {
         console.log(deck.id + ' updated deck');
     });
 
+    socket.on('declare', (game) => {
+        io.to(game.game).emit('declare', game);
+        console.log(game.id + ' declared');
+    });
+
     socket.on('startgame', (game) => {
         io.to(game.game).emit('startgame', game);
         console.log(game.game + ' started game');

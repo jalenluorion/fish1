@@ -10,11 +10,26 @@ export default function Handler({ game, name }: { game: string, name: string }) 
     const [gameStarted, setGameStarted] = useState(false);
     const [deck, setDeck] = useState<{ name: string, id: string, cards: string[] }[]>([]);
     const [participants, setParticipants] = useState(0);
+    const [halfSet1, setHalfSet1] = useState<string[]>([]);
+    const [halfSet2, setHalfSet2] = useState<string[]>([]);
     const [socketId, setSocketId] = useState('');
 
     const [isConnected, setIsConnected] = useState(false);
     const [transport, setTransport] = useState('N/A');
     const [updates, setUpdates] = useState<string[]>([]);
+
+    const halfSets8 = ['High Spades', 'Low Spades', 'High Clubs', 'Low Clubs', 'High Diamonds', 'Low Diamonds', 'High Hearts', 'Low Hearts', 'Aces/Jokers']
+
+    const expandedHalfSets =   [[['8S', '8 of Spades'], ['9S', '9 of Spades'], ['TS', '10 of Spades'], ['JS', 'Jack of Spades'], ['QS', 'Queen of Spades'], ['KS', 'King of Spades']], 
+                                [['2S', '2 of Spades'], ['3S', '3 of Spades'], ['4S', '4 of Spades'], ['5S', '5 of Spades'], ['6S', '6 of Spades'], ['7S', '7 of Spades']], 
+                                [['8C', '8 of Clubs'], ['9C', '9 of Clubs'], ['TC', '10 of Clubs'], ['JC', 'Jack of Clubs'], ['QC', 'Queen of Clubs'], ['KC', 'King of Clubs']], 
+                                [['2C', '2 of Clubs'], ['3C', '3 of Clubs'], ['4C', '4 of Clubs'], ['5C', '5 of Clubs'], ['6C', '6 of Clubs'], ['7C', '7 of Clubs']], 
+                                [['8D', '8 of Diamonds'], ['9D', '9 of Diamonds'], ['TD', '10 of Diamonds'], ['JD', 'Jack of Diamonds'], ['QD', 'Queen of Diamonds'], ['KD', 'King of Diamonds']], 
+                                [['2D', '2 of Diamonds'], ['3D', '3 of Diamonds'], ['4D', '4 of Diamonds'], ['5D', '5 of Diamonds'], ['6D', '6 of Diamonds'], ['7D', '7 of Diamonds']], 
+                                [['8H', '8 of Hearts'], ['9H', '9 of Hearts'], ['TH', '10 of Hearts'], ['JH', 'Jack of Hearts'], ['QH', 'Queen of Hearts'], ['KH', 'King of Hearts']], 
+                                [['2H', '2 of Hearts'], ['3H', '3 of Hearts'], ['4H', '4 of Hearts'], ['5H', '5 of Hearts'], ['6H', '6 of Hearts'], ['7H', '7 of Hearts']], 
+                                [['AS', 'Ace of Spades'], ['AH', 'Ace of Hearts'], ['AD', 'Ace of Diamonds'], ['AC', 'Ace of Clubs'], ['JB', 'Black Joker'], ['JR', 'Red Joker']]]
+
 
     useEffect(() => {
         if (socket.connected) {
@@ -156,6 +171,18 @@ export default function Handler({ game, name }: { game: string, name: string }) 
             setUpdates([...updates, message]);
         });
 
+        socket.on('declare', (data) => {
+            const name = deck.find((player) => player.id === data.id)?.name;
+            const message = `${name} declared half set ${data.halfSet} ${data.correct ? 'correctly' : 'incorrectly'}`;
+            setUpdates([...updates, message]);
+
+            if (data.modulus === 0) {
+                setHalfSet1([...halfSet1, data.halfSet]);
+            } else {
+                setHalfSet2([...halfSet2, data.halfSet]);
+            }
+        });
+
         socket.on('startgame', () => {
             setGameStarted(true);
         });
@@ -166,6 +193,7 @@ export default function Handler({ game, name }: { game: string, name: string }) 
             socket.off('updateDeck');
             socket.off('leaveroom');
             socket.off('cardtap');
+            socket.off('declare');
             socket.off('startgame');
         };
     });
@@ -187,19 +215,49 @@ export default function Handler({ game, name }: { game: string, name: string }) 
         socket.emit('updateDeck', { game: game, deck: newDeck, participants: participants });
     }
 
+    function handleDeclare(value: string, modulus: number, correct: boolean) {
+        const index = halfSets8.indexOf(value);
+        console.log(index, value)
+        const expandedHalfSet = expandedHalfSets[index].map((selection) => selection[0]);
+        console.log(expandedHalfSet)
+
+        const newDeck = deck.map((player) => {
+            return { name: player.name, id: player.id, cards: player.cards.filter((card) => !expandedHalfSet.includes(card)) };
+        })
+
+        socket.emit('declare', { game: game, id: socketId, modulus: modulus, halfSet: value, correct: correct });
+        socket.emit('updateDeck', { game: game, deck: newDeck, participants: participants });
+    }
+
     return gameStarted ? (
-        <Game 
-            id={socketId}
-            deck={deck} 
-            handleCardTransfer={handleCardTransfer}
-        />
-    ) : (
-        <Waiting
-            deck={deck}
-            code={game}
-            participants={participants}
-            handleParticipantsChange={setParticipants}
-            startGame={handleStartGame}
-        />
-    );
+            <main className=''>
+                <Game 
+                    id={socketId}
+                    deck={deck} 
+                    halfSet1={halfSet1}
+                    halfSet2={halfSet2}
+                    handleCardTransfer={handleCardTransfer}
+                    handleDeclare={handleDeclare}
+                />
+                <div className='absolute top-0 left-0 w-full'>
+                    <div className='flex flex-col w-1/4 h-full text-white'>
+                        <h1 className='text-2xl'>Updates</h1>
+                        <div className='flex-1 overflow-y-scroll'>
+                            {updates.slice(-3).map((update, index) => (
+                                <p key={index} className='text-sm'>{update}</p>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </main>
+            ) : (
+            <Waiting
+                deck={deck}
+                code={game}
+                participants={participants}
+                handleParticipantsChange={setParticipants}
+                startGame={handleStartGame}
+            />
+            );
+        
 }
