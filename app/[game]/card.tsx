@@ -86,6 +86,7 @@ export function HHand({ index, deck, active, orientation, func }: { index: numbe
             <div className={`hand hhand${active ? '' : '-compact'} ${active ? 'active-hand' : ''}`}>
                 {player.cards.map((selection, _) => (
                     <Card
+                        key={_}
                         index={index}
                         active={active}
                         names={names}
@@ -119,8 +120,9 @@ export function VHand({ index, deck, active, orientation, func }: { index: numbe
                 </div>
             )}
             <div className={`hand vhand${active ? '' : '-compact'} ${active ? 'active-hand' : ''}`}>
-                {player.cards.map((selection, index) => (
+                {player.cards.map((selection, _) => (
                     <Card
+                        key={_}
                         index={index}
                         active={active}
                         names={names}
