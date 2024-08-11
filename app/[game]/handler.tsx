@@ -5,6 +5,8 @@ import Waiting from './waiting';
 import { useState, useEffect } from 'react';
 import { socket } from '../socket';
 import Cookies from 'js-cookie';
+import Confetti from 'react-confetti'
+import useWindowSize from 'react-use/lib/useWindowSize'
 
 export default function Handler({ game, name }: { game: string, name: string }) {
     const [gameStarted, setGameStarted] = useState(false);
@@ -18,6 +20,8 @@ export default function Handler({ game, name }: { game: string, name: string }) 
     const [transport, setTransport] = useState('N/A');
     const [updates, setUpdates] = useState<string[]>([]);
 
+    const [showConfetti, setShowConfetti] = useState(false);
+
     const halfSets8 = ['High Spades', 'Low Spades', 'High Clubs', 'Low Clubs', 'High Diamonds', 'Low Diamonds', 'High Hearts', 'Low Hearts', 'Aces/Jokers']
 
     const expandedHalfSets =   [[['8S', '8 of Spades'], ['9S', '9 of Spades'], ['TS', '10 of Spades'], ['JS', 'Jack of Spades'], ['QS', 'Queen of Spades'], ['KS', 'King of Spades']], 
@@ -30,6 +34,7 @@ export default function Handler({ game, name }: { game: string, name: string }) 
                                 [['2H', '2 of Hearts'], ['3H', '3 of Hearts'], ['4H', '4 of Hearts'], ['5H', '5 of Hearts'], ['6H', '6 of Hearts'], ['7H', '7 of Hearts']], 
                                 [['AS', 'Ace of Spades'], ['AH', 'Ace of Hearts'], ['AD', 'Ace of Diamonds'], ['AC', 'Ace of Clubs'], ['JB', 'Black Joker'], ['JR', 'Red Joker']]]
 
+    const { width, height } = useWindowSize()
 
     useEffect(() => {
         if (socket.connected) {
@@ -175,6 +180,12 @@ export default function Handler({ game, name }: { game: string, name: string }) 
             const name = deck.find((player) => player.id === data.id)?.name;
             const message = `${name} declared half set ${data.halfSet} ${data.correct ? 'correctly' : 'incorrectly'}`;
             setUpdates([...updates, message]);
+            
+            setShowConfetti(true);
+    
+            setTimeout(() => {
+                setShowConfetti(false);
+            }, 5000);
 
             if (data.modulus === 0) {
                 setHalfSet1([...halfSet1, data.halfSet]);
@@ -231,6 +242,7 @@ export default function Handler({ game, name }: { game: string, name: string }) 
 
     return gameStarted ? (
             <main className=''>
+                {showConfetti && <Confetti width={width} height={height} />}
                 <Game 
                     id={socketId}
                     deck={deck} 
@@ -249,6 +261,7 @@ export default function Handler({ game, name }: { game: string, name: string }) 
                         </div>
                     </div>
                 </div>
+
             </main>
             ) : (
             <Waiting

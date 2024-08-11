@@ -71,9 +71,28 @@ export function Card({ index, active, names, selection, orientation, func }: { i
     );
 }
 
+const expandedHalfSets =   [[['2S', '2 of Spades'], ['3S', '3 of Spades'], ['4S', '4 of Spades'], ['5S', '5 of Spades'], ['6S', '6 of Spades'], ['7S', '7 of Spades']], 
+                            [['8S', '8 of Spades'], ['9S', '9 of Spades'], ['TS', '10 of Spades'], ['JS', 'Jack of Spades'], ['QS', 'Queen of Spades'], ['KS', 'King of Spades']], 
+                            [['2C', '2 of Clubs'], ['3C', '3 of Clubs'], ['4C', '4 of Clubs'], ['5C', '5 of Clubs'], ['6C', '6 of Clubs'], ['7C', '7 of Clubs']],     
+                            [['8C', '8 of Clubs'], ['9C', '9 of Clubs'], ['TC', '10 of Clubs'], ['JC', 'Jack of Clubs'], ['QC', 'Queen of Clubs'], ['KC', 'King of Clubs']], 
+                            [['2D', '2 of Diamonds'], ['3D', '3 of Diamonds'], ['4D', '4 of Diamonds'], ['5D', '5 of Diamonds'], ['6D', '6 of Diamonds'], ['7D', '7 of Diamonds']], 
+                            [['8D', '8 of Diamonds'], ['9D', '9 of Diamonds'], ['TD', '10 of Diamonds'], ['JD', 'Jack of Diamonds'], ['QD', 'Queen of Diamonds'], ['KD', 'King of Diamonds']], 
+                            [['2H', '2 of Hearts'], ['3H', '3 of Hearts'], ['4H', '4 of Hearts'], ['5H', '5 of Hearts'], ['6H', '6 of Hearts'], ['7H', '7 of Hearts']], 
+                            [['8H', '8 of Hearts'], ['9H', '9 of Hearts'], ['TH', '10 of Hearts'], ['JH', 'Jack of Hearts'], ['QH', 'Queen of Hearts'], ['KH', 'King of Hearts']], 
+                            [['AS', 'Ace of Spades'], ['AH', 'Ace of Hearts'], ['AD', 'Ace of Diamonds'], ['AC', 'Ace of Clubs'], ['JB', 'Black Joker'], ['JR', 'Red Joker']]]
+const flatExpanded = expandedHalfSets.flat();
+
 export function HHand({ index, deck, active, orientation, func }: { index: number; deck: { name: string; id: string; cards: string[] }[]; active: boolean; orientation: string; func: (value: string, player: string) => void }) {
     const player = deck[index];
     const names = deck.map(({ name, id }) => ({ name, id }));
+
+    // order the deck in the order of flatExpanded
+
+    const orderedDeck = flatExpanded.map((selection) => {
+        const index = player.cards.indexOf(selection[0]);
+        if (index === -1) return;
+        return player.cards[index];
+    }).filter((selection) => selection !== undefined);  
 
     const color = index % 2 === 0 ? 'bg-[#84240c]' : 'bg-[#563232]';
 
@@ -84,13 +103,13 @@ export function HHand({ index, deck, active, orientation, func }: { index: numbe
         >
             {orientation == 'bottom' && <h1 className={`text-4xl mt-1 text-white ${color} p-1 rounded-lg`}>{player.name}</h1>}
             <div className={`hand hhand${active ? '' : '-compact'} ${active ? 'active-hand' : ''}`}>
-                {player.cards.map((selection, _) => (
+                {orderedDeck.map((selection, _) => (
                     <Card
                         key={_}
                         index={index}
                         active={active}
                         names={names}
-                        selection={active ? selection : 'Blue_Back'}
+                        selection={active ? selection || 'Red_Back' : 'Blue_Back'}
                         orientation={orientation}
                         func={func}
                     />
